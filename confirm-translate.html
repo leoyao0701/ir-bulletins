@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>确认获取翻译</title>
+  <style>
+    body { margin: 0; background: #1B2430; color: #F4EFE6; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .wrap { max-width: 440px; margin: 0 auto; padding: 32px 20px 48px; }
+    img.mark { width: 64px; height: 64px; display: block; border-radius: 8px; }
+    h1 { font-size: 20px; font-weight: 600; margin: 20px 0 8px; }
+    .paper { font-size: 15px; line-height: 1.45; color: #F4EFE6; margin: 0 0 12px; }
+    .meta { font-size: 13px; color: #b7b3aa; margin: 0 0 20px; }
+    .note { font-size: 14px; color: #d8d3c8; margin: 0 0 24px; }
+    .row { display: flex; gap: 10px; }
+    button, a.btn { flex: 1; text-align: center; padding: 12px 14px; border: 0; border-radius: 4px; font-size: 15px; cursor: pointer; text-decoration: none; }
+    .go { background: #1D76DB; color: #fff; }
+    .no { background: #3a4452; color: #F4EFE6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="mark" src="email-mark.png" alt="IR">
+    <h1>确认获取翻译</h1>
+    <p class="paper" id="paper"></p>
+    <p class="meta" id="meta"></p>
+    <p class="note">确认后会开始全文翻译。完成后，完整中文译文会发到你的邮箱。</p>
+    <div class="row">
+      <button class="no" type="button" id="cancel">取消</button>
+      <button class="go" type="button" id="ok">确认获取</button>
+    </div>
+  </div>
+  <script>
+    var REPO = "leoyao0701/ir-core-pool-digest";
+    var q = new URLSearchParams(location.search);
+    var doi = (q.get("doi") || "").trim();
+    var title = q.get("title") || "这篇论文";
+    var journal = q.get("journal") || "";
+    var issue = q.get("issue") || "";
+    var radar = q.get("radar") === "1";
+    document.getElementById("paper").textContent = title;
+    document.getElementById("meta").textContent = [journal, doi ? "doi:" + doi : ""].filter(Boolean).join("  ·  ");
+
+    document.getElementById("cancel").onclick = function () {
+      document.querySelector(".note").textContent = "已取消。可以关闭此页。";
+      document.querySelector(".row").style.display = "none";
+    };
+
+    document.getElementById("ok").onclick = function () {
+      var ok = window.confirm("确定获取这篇论文的完整中文翻译？\n译完后全文会发到你的邮箱。");
+      if (!ok) return;
+      var flag = radar ? "🎯 " : "";
+      var issueTitle = (journal ? "[" + journal + "] " : "") + flag + title;
+      var lines = ["来自邮件「获取翻译」。", "", "确认后将生成完整中文译文并发送到邮箱。", ""];
+      if (doi) lines.push("- DOI：https://doi.org/" + doi);
+      if (journal) lines.push("- 刊：" + journal);
+      if (issue) lines.push("- 日报：#" + issue);
+      lines.push("", "<!-- pipeline:translate -->");
+      var url = "https://github.com/" + REPO + "/issues/new?" + new URLSearchParams({
+        title: issueTitle.slice(0, 240),
+        body: lines.join("\n"),
+        labels: radar ? "collect,paper,radar" : "collect,paper"
+      }).toString();
+      location.href = url;
+    };
+  </script>
+</body>
+</html>
